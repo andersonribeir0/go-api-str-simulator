@@ -11,5 +11,5 @@ func main() {
 	r := httprouter.New()
 	sc := controllers.NewStrController()
 	r.POST("/", sc.Str)
-	http.ListenAndServe("localhost:8080", r)
+	http.ListenAndServe(":8080", r)
 }
