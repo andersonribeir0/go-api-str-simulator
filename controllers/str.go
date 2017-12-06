@@ -25,13 +25,7 @@ func NewStrController() *StrController {
 	return &StrController{}
 }
 
-//Str Trata requisições vindas simulando o sistema matera.
-func (str StrController) Str(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var strRequest models.StrRequest
-	var strResponse models.StrResponse
-	var strRequestMessage models.STR0007
-	var strResponseMessage models.STR0007R1
-
+func init() {
 	//log setup
 	f, err := os.OpenFile("logfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -39,11 +33,19 @@ func (str StrController) Str(w http.ResponseWriter, r *http.Request, _ httproute
 	}
 	defer f.Close()
 	log.SetOutput(f)
+}
+
+//Str Trata requisições vindas simulando o sistema matera.
+func (str StrController) Str(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var strRequest models.StrRequest
+	var strResponse models.StrResponse
+	var strRequestMessage models.STR0007
+	var strResponseMessage models.STR0007R1
 
 	//Response header
 	w.Header().Add("content-type", "application/json")
 	//decodeRequest
-	err = json.NewDecoder(r.Body).Decode(&strRequest)
+	err := json.NewDecoder(r.Body).Decode(&strRequest)
 	log.Println("Incoming data: ", strRequest)
 	if err != nil {
 		log.Println(err)
@@ -59,8 +61,10 @@ func (str StrController) Str(w http.ResponseWriter, r *http.Request, _ httproute
 	strResponseMessage.Code = "STR0007R1"
 	strResponseMessage.IFNumber = strRequestMessage.IFNumber
 	strResponseMessage.MovtoDate = time.Now().Format("2006-01-02")
-	strResponseMessage.SourceISPB = strRequestMessage.SourceISPB
-	strResponseMessage.StrStatus = "1"
+	strResponseMessage.SourceISPB.CodErro = "EGEN0017"
+	strResponseMessage.SourceISPB.Data = strRequestMessage.SourceISPB
+	strResponseMessage.StrStatus = "7"
+	strResponseMessage.SysDateTime = time.Now().String()
 	b, err := xml.Marshal(strResponseMessage)
 	if err != nil {
 		log.Println(err)
@@ -68,15 +72,16 @@ func (str StrController) Str(w http.ResponseWriter, r *http.Request, _ httproute
 	}
 	strResponse.Message = string(b)
 	strResponse.CompanyNumber = strRequest.CompanyNumber
-	strResponse.DateTime = "2017-12-13 15:00:00"
+	strResponse.DateTime = time.Now().Format("20060102150405")
 	strResponse.OperationID1 = strRequest.OperationID1
 	strResponse.OperationID2 = strRequest.OperationID2
-	strResponse.Status = 7
+	strResponse.Status = 11
 	strResponse.ID = strconv.Itoa(rand.Intn(99999))
 	strResponse.Domain = "SPB01"
 	strResponse.Event = strRequest.Event
-	strResponse.StatusThrow = "4"
+	strResponse.StatusThrow = "5"
 	strResponse.Source = strRequest.Source
+
 	log.Println("XmlData strResponse: ", string(b))
 	if err := json.NewEncoder(w).Encode(strResponse); err != nil {
 		fmt.Println(reflect.TypeOf(err).String())
